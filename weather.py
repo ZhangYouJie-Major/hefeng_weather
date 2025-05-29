@@ -87,8 +87,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--QWEATHER_API_KEY", help="QWEATHER_API_KEY", required=False)
-    args = parser.parse_args()
-    if args.QWEATHER_API_KEY:
+    parser.add_argument("--key", type=str, help="和风天气api key")
+    args, _ = parser.parse_known_args()
+    if args.key:
         QWEATHER_API_KEY = args.QWEATHER_API_KEY
+
     mcp.run(transport='stdio')
