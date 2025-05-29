@@ -1,39 +1,41 @@
+import os
 from typing import Any
+
 import httpx
-import argparse
 from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
-mcp = FastMCP("weather")
+mcp = FastMCP("heFeng_weather")
 
-# Constants
-QWEATHER_API_BASE = "https://n32k5mjny8.re.qweatherapi.com/v7"
-QWEATHER_API_KEY = ''
 
-async def get_api_key():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--key", type=str, help="QWeather API Key")
-    args, _ = parser.parse_known_args()
-    if args.key:
-        return args.key
-    raise ValueError("QWEATHER_API_KEY 未通过 --key 参数传入")
+def get_config():
+    """ get api config"""
+    config = {
+        "WEATHER_API_KEY": os.getenv("WEATHER_API_KEY"),
+        "WEATHER_API_BASE": os.getenv("WEATHER_API_BASE")
+    }
+    return config
+
 
 async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, Any] | None:
     """Make a request to the QWeather API with proper error handling."""
     if params is None:
         params = {}
-    
-    # Add API key to params
-    params['key'] = QWEATHER_API_KEY
-    
-    url = f"{QWEATHER_API_BASE}/{endpoint}"
-    
+
+    config = get_config()
+
+    # Add the API key to the params
+    WEATHER_API_BASE = config.get("WEATHER_API_BASE")
+    params['key'] = config.get("WEATHER_API_KEY")
+
+    url = f"{WEATHER_API_BASE}/{endpoint}"
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url, params=params, timeout=30.0)
             response.raise_for_status()
             data = response.json()
-            
+
             # Check if the API response is successful
             if data.get('code') == '200':
                 return data
@@ -41,16 +43,6 @@ async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, 
         except Exception:
             return None
 
-def format_alert(feature: dict) -> str:
-    """Format an alert feature into a readable string."""
-    props = feature["properties"]
-    return f"""
-Event: {props.get('event', 'Unknown')}
-Area: {props.get('areaDesc', 'Unknown')}
-Severity: {props.get('severity', 'Unknown')}
-Description: {props.get('description', 'No description available')}
-Instructions: {props.get('instruction', 'No specific instructions provided')}
-"""
 
 def format_forecast(day: dict) -> str:
     """Format a daily forecast into a readable string."""
@@ -70,29 +62,6 @@ def format_forecast(day: dict) -> str:
 日落: {day['sunset']}
 """
 
-@mcp.tool()
-async def get_alerts(location: str) -> str:
-    """Get weather alerts for a location.
-
-    Args:
-        location: Location ID (e.g. 101010100 for Beijing)
-    """
-    data = await make_weather_request('/geo/v2/city/lookup', {'location': location})
-
-    if not data or 'warning' not in data:
-        return "No active alerts for this location."
-
-    alerts = []
-    for warning in data['warning']:
-        alert = f"""
-Type: {warning.get('typeName', 'Unknown')}
-Level: {warning.get('levelName', 'Unknown')}
-Title: {warning.get('title', 'Unknown')}
-Description: {warning.get('text', 'No description available')}
-"""
-        alerts.append(alert)
-
-    return "\n---\n".join(alerts) if alerts else "No active alerts for this location."
 
 @mcp.tool()
 async def get_forecast(location: str) -> str:
@@ -101,7 +70,7 @@ async def get_forecast(location: str) -> str:
     Args:
         location: Location ID (e.g. 101010100 for Beijing)
     """
-    data = await make_weather_request('weather/3d', {'location': location})
+    data = await make_weather_request('v7/weather/3d', {'location': location})
 
     if not data or 'daily' not in data:
         return "Unable to fetch forecast data for this location."
@@ -109,19 +78,19 @@ async def get_forecast(location: str) -> str:
     forecasts = [format_forecast(day) for day in data['daily']]
     return "\n---\n".join(forecasts)
 
+
 @mcp.tool()
-async def get_location_id(city_name: str) -> dict:
+async def get_location_id(city_name: str) -> str | Any:
     """Query the location id by city name. Returns the location id of the first matching city, or None if no match is found.
     
     Args:
         city_name: The name of the city to query
     """
-    data = await make_weather_request('/geo/v2/city/lookup', {'location': city_name})
+    data = await make_weather_request('geo/v2/city/lookup', {'location': city_name})
     if not data or 'location' not in data:
-        return "无法找到匹配的城市。"
+        return "No matching cities found."
     return data['location'][0]['id']
 
+
 if __name__ == "__main__":
-    QWEATHER_API_KEY = get_api_key()
-    # Initialize and run the server
     mcp.run(transport='stdio')
