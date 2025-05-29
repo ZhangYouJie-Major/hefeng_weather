@@ -1,6 +1,6 @@
 from typing import Any
+
 import httpx
-import argparse
 from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
@@ -9,15 +9,6 @@ mcp = FastMCP("weather")
 # Constants
 QWEATHER_API_BASE = "https://n32k5mjny8.re.qweatherapi.com"
 QWEATHER_API_KEY = ''
-
-
-async def get_api_key():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--key", type=str, help="QWeather API Key")
-    args, _ = parser.parse_known_args()
-    if args.key:
-        return args.key
-    raise ValueError("QWEATHER_API_KEY 未通过 --key 参数传入")
 
 
 async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, Any] | None:
@@ -93,6 +84,11 @@ async def get_location_id(city_name: str) -> str | Any:
 
 
 if __name__ == "__main__":
-    QWEATHER_API_KEY = get_api_key()
-    # Initialize and run the server
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--QWEATHER_API_KEY", help="QWEATHER_API_KEY", required=False)
+    args = parser.parse_args()
+    if args.QWEATHER_API_KEY:
+        QWEATHER_API_KEY = args.QWEATHER_API_KEY
     mcp.run(transport='stdio')
