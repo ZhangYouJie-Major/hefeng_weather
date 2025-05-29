@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+      "hefeng_weather": {
+        "command": "uv",
+        "args":
+        [
+            "--key",
+            "xxxxxx",
+            "run",
+            "weather.py"
+        ]
+      }
+    }
+  }
