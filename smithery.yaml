@@ -1,0 +1,19 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({command: 'python', args: ['weather.py', '--key', config.key]})
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - key
+    properties:
+      key:
+        type: string
+        description: QWeather API Key
+  exampleConfig:
+    key: YOUR_QWEATHER_API_KEY
