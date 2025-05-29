@@ -1,24 +1,20 @@
+import os
 from typing import Any
 
 import httpx
-import argparse
 from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
-mcp = FastMCP("weather")
-
-# Constants
-QWEATHER_API_BASE = "https://n32k5mjny8.re.qweatherapi.com"
-QWEATHER_API_KEY = ''
+mcp = FastMCP("heFeng_weather")
 
 
-async def get_api_key():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--key", type=str, help="和风 API Key")
-    args, _ = parser.parse_known_args()
-    if args.key:
-        return args.key
-    raise ValueError("QWEATHER_API_KEY 未通过 --key 参数传入")
+def get_config():
+    """ get api config"""
+    config = {
+        "WEATHER_API_KEY": os.getenv("WEATHER_API_KEY"),
+        "WEATHER_API_BASE": os.getenv("WEATHER_API_BASE")
+    }
+    return config
 
 
 async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, Any] | None:
@@ -26,10 +22,13 @@ async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, 
     if params is None:
         params = {}
 
-    # Add API key to params
-    params['key'] = QWEATHER_API_KEY
+    config = get_config()
 
-    url = f"{QWEATHER_API_BASE}/{endpoint}"
+    # Add the API key to the params
+    WEATHER_API_BASE = config.get("WEATHER_API_BASE")
+    params['key'] = config.get("WEATHER_API_KEY")
+
+    url = f"{WEATHER_API_BASE}/{endpoint}"
 
     async with httpx.AsyncClient() as client:
         try:
@@ -94,6 +93,4 @@ async def get_location_id(city_name: str) -> str | Any:
 
 
 if __name__ == "__main__":
-    QWEATHER_API_KEY = get_api_key()
-
     mcp.run(transport='stdio')

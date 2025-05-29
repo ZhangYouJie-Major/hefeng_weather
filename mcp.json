@@ -1,14 +1,16 @@
 {
     "mcpServers": {
-      "hefeng_weather": {
+      "heFeng_weather": {
         "command": "uv",
         "args":
         [
-            "--key",
-            "xxxxxx",
             "run",
             "weather.py"
-        ]
+        ],
+        "env": {
+          "WEATHER_API_BASE": "",
+          "WEATHER_API_KEY": ""
+        }
       }
     }
   }
