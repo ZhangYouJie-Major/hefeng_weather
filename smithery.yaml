@@ -3,17 +3,29 @@
 startCommand:
   type: stdio
   commandFunction:
-    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
-    |-
-    (config) => ({command: 'python', args: ['weather.py', '--key', config.key]})
+    # 使用 config 中的 WEATHER_API_KEY 和 WEATHER_API_BASE 构造启动命令
+    |- 
+    (config) => ({
+      command: 'python',
+      args: [
+        'weather.py',
+        '--WEATHER_API_KEY', config.WEATHER_API_KEY,
+        '--WEATHER_API_BASE', config.WEATHER_API_BASE
+      ]
+    })
   configSchema:
-    # JSON Schema defining the configuration options for the MCP.
+    # JSON Schema 定义启动所需的配置参数
     type: object
     required:
-      - key
+      - WEATHER_API_KEY
+      - WEATHER_API_BASE
     properties:
-      key:
+      WEATHER_API_KEY:
         type: string
-        description: QWeather API Key
+        description: 和风天气 API 密钥
+      WEATHER_API_BASE:
+        type: string
+        description: 和风天气 API 的基础 URL 地址
   exampleConfig:
-    key: YOUR_QWEATHER_API_KEY
+    WEATHER_API_KEY: "your_api_key_here"
+    WEATHER_API_BASE: "https://n32k5mjny8.re.qweatherapi.com"

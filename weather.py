@@ -1,6 +1,7 @@
 import os
 from typing import Any
 
+import argparse
 import httpx
 from mcp.server.fastmcp import FastMCP
 
@@ -8,13 +9,17 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("heFeng_weather")
 
 
-def get_config():
-    """ get api config"""
-    config = {
-        "WEATHER_API_KEY": os.getenv("WEATHER_API_KEY"),
-        "WEATHER_API_BASE": os.getenv("WEATHER_API_BASE")
+def get_api_config() -> dict:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--WEATHER_API_BASE", type=str, help="和风 API 基础 URL")
+    parser.add_argument("--WEATHER_API_KEY", type=str, help="和风 API Key")
+    args, _ = parser.parse_known_args()
+
+    # 返回多个配置项
+    return {
+        'WEATHER_API_BASE': args.WEATHER_API_BASE,
+        'WEATHER_API_KEY': args.WEATHER_API_KEY
     }
-    return config
 
 
 async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, Any] | None:
@@ -22,11 +27,11 @@ async def make_weather_request(endpoint: str, params: dict = None) -> dict[str, 
     if params is None:
         params = {}
 
-    config = get_config()
+    config = get_api_config()
 
     # Add the API key to the params
-    WEATHER_API_BASE = config.get("WEATHER_API_BASE")
-    params['key'] = config.get("WEATHER_API_KEY")
+    WEATHER_API_BASE = config['WEATHER_API_BASE']
+    params['key'] = config['WEATHER_API_KEY']
 
     url = f"{WEATHER_API_BASE}/{endpoint}"
 
